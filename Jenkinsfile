@@ -42,9 +42,10 @@ pipeline {
 
     stage('Deploy') {
       steps {
-        withCredentials([file(credentialsId: 'k3s-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+        withCredentials([string(credentialsId: 'k3s-kubeconfig', variable: 'KUBECONFIG_CONTENT')]) {
             sh '''
-                cp $KUBECONFIG_FILE /tmp/k3s-config
+                echo "$KUBECONFIG_CONTENT" > /tmp/k3s-config
+                chmod 600 /tmp/k3s-config
                 docker run --rm \
                   --network host \
                   -v /tmp/k3s-config:/tmp/kubeconfig \
