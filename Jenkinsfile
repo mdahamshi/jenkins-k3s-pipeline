@@ -7,57 +7,56 @@ pipeline {
         KUBECONFIG_CREDENTIAL = credentials('k3s-kubeconfig')
     }
     stages {
-
         stage('Build') {
-            steps {
-                sh '''
+      steps {
+        sh '''
                     docker build -t $IMAGE_NAME:$IMAGE_TAG .
                     docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
                 '''
-            }
+      }
         }
 
         stage('Test') {
-            agent {
-                docker {
-                    image 'node:20-alpine'
-                    reuseNode true
-                }
-            }
-            steps {
-                sh '''
+      agent {
+        docker {
+          image 'node:20-alpine'
+          reuseNode true
+        }
+      }
+      steps {
+        sh '''
                     npm test
                 '''
-            }
+      }
         }
 
         stage('Push') {
-            steps {
-                sh '''
+      steps {
+        sh '''
                     echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
                     docker push $IMAGE_NAME:$IMAGE_TAG
                     docker push $IMAGE_NAME:latest
                 '''
-            }
+      }
         }
 
         stage('Deploy') {
-            steps {
-                sh '''
-                    export KUBECONFIG=$KUBECONFIG_CREDENTIAL
-                    kubectl set image deployment/jenkins-k3s-app \
-                        app=$IMAGE_NAME:$IMAGE_TAG \
-                        --kubeconfig=$KUBECONFIG_CREDENTIAL
-                    kubectl rollout status deployment/jenkins-k3s-app \
-                        --kubeconfig=$KUBECONFIG_CREDENTIAL
-                '''
-            }
+      steps {
+        withCredentials([file(credentialsId: 'k3s-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+          sh '''
+                        docker run --rm \
+                          -v $KUBECONFIG_FILE:/root/.kube/config \
+                          bitnami/kubectl:latest \
+                          set image deployment/jenkins-k3s-app \
+                          app=ghcr.io/mdahamshi/jenkins-k3s-pipeline:$BUILD_NUMBER
+                    '''
         }
-
+      }
+        }
     }
     post {
         always {
-            sh 'docker logout ghcr.io'
+      sh 'docker logout ghcr.io'
         }
     }
 }
