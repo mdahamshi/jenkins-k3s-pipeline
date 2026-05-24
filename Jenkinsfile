@@ -40,20 +40,21 @@ pipeline {
       }
         }
 
-        stage('Deploy') {
+    stage('Deploy') {
       steps {
         withCredentials([file(credentialsId: 'k3s-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
-          sh '''
-                        docker run --rm \
-                          --network host \
-                          -v $KUBECONFIG_FILE:/root/.kube/config \
-                          bitnami/kubectl:latest \
-                          set image deployment/jenkins-k3s-app \
-                          app=ghcr.io/mdahamshi/jenkins-k3s-pipeline:$BUILD_NUMBER
-                    '''
+            sh '''
+                docker run --rm \
+                  --network host \
+                  -v $KUBECONFIG_FILE:/tmp/kubeconfig \
+                  bitnami/kubectl:latest \
+                  --kubeconfig=/tmp/kubeconfig \
+                  set image deployment/jenkins-k3s-app \
+                  app=ghcr.io/mdahamshi/jenkins-k3s-pipeline:$BUILD_NUMBER
+            '''
         }
       }
-        }
+    }
     }
     post {
         always {
