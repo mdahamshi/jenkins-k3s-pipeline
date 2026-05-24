@@ -44,13 +44,15 @@ pipeline {
       steps {
         withCredentials([file(credentialsId: 'k3s-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
             sh '''
+                cp $KUBECONFIG_FILE /tmp/k3s-config
                 docker run --rm \
                   --network host \
-                  -v $KUBECONFIG_FILE:/tmp/kubeconfig \
+                  -v /tmp/k3s-config:/tmp/kubeconfig \
                   bitnami/kubectl:latest \
                   --kubeconfig=/tmp/kubeconfig \
                   set image deployment/jenkins-k3s-app \
                   app=ghcr.io/mdahamshi/jenkins-k3s-pipeline:$BUILD_NUMBER
+                rm -f /tmp/k3s-config
             '''
         }
       }
