@@ -13,6 +13,8 @@ spec:
       labels:
         app: jenkins-k3s-app
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: app
           image: ghcr.io/mdahamshi/jenkins-k3s-pipeline:latest
