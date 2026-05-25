@@ -4,7 +4,6 @@ pipeline {
         IMAGE_NAME = 'ghcr.io/mdahamshi/jenkins-k3s-pipeline'
         IMAGE_TAG = "${BUILD_NUMBER}"
         GITHUB_TOKEN = credentials('github-token')
-        KUBECONFIG_CREDENTIAL = credentials('k3s-kubeconfig')
     }
     stages {
         stage('Build') {
@@ -33,9 +32,10 @@ pipeline {
         stage('Push') {
       steps {
         sh '''
-                    echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+                    echo $GITHUB_TOKEN | docker login ghcr.io -u mdahamshi --password-stdin
                     docker push $IMAGE_NAME:$IMAGE_TAG
                     docker push $IMAGE_NAME:latest
+                    docker logout ghcr.io
                 '''
       }
         }
@@ -44,16 +44,19 @@ pipeline {
       steps {
         withCredentials([string(credentialsId: 'k3s-kubeconfig', variable: 'KUBECONFIG_CONTENT')]) {
             sh '''
-                echo "$KUBECONFIG_CONTENT" > /tmp/k3s-config
-                chmod 600 /tmp/k3s-config
+                TMPDIR=$(mktemp -d)
+                echo "$KUBECONFIG_CONTENT" > $TMPDIR/config
+                chmod 600 $TMPDIR/config
+
                 docker run --rm \
                   --network host \
-                  -v /tmp/k3s-config:/tmp/kubeconfig \
+                  -v $TMPDIR/config:/tmp/kubeconfig:ro \
                   bitnami/kubectl:latest \
                   --kubeconfig=/tmp/kubeconfig \
                   set image deployment/jenkins-k3s-app \
-                  app=ghcr.io/mdahamshi/jenkins-k3s-pipeline:$BUILD_NUMBER
-                rm -f /tmp/k3s-config
+                  app=$IMAGE_NAME:$IMAGE_TAG
+
+                rm -rf $TMPDIR
             '''
         }
       }
@@ -61,7 +64,7 @@ pipeline {
     }
     post {
         always {
-      sh 'docker logout ghcr.io'
+      sh 'docker logout ghcr.io || true'
         }
     }
 }
