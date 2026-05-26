@@ -5,4 +5,4 @@ resources:
   - service.yaml
 images:
   - name: ghcr.io/mdahamshi/jenkins-k3s-pipeline
-    newTag: latest
+    newTag: "latest"
