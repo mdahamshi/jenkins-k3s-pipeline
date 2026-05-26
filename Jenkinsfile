@@ -46,7 +46,7 @@ pipeline {
             sh '''
                 echo "$KUBECONFIG_CONTENT" | base64 -d > /tmp/k3s-config
                 chmod 600 /tmp/k3s-config
-                sed -i "s|newTag:.*|newTag: $IMAGE_TAG|" k8s/kustomization.yaml
+                sed -i "s|newTag: \".*\"|newTag: \"$IMAGE_TAG\"|" k8s/kustomization.yaml
                 kubectl --kubeconfig=/tmp/k3s-config apply -k k8s/
                 rm -f /tmp/k3s-config
             '''
