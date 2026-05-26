@@ -44,19 +44,10 @@ pipeline {
       steps {
         withCredentials([string(credentialsId: 'k3s-kubeconfig', variable: 'KUBECONFIG_CONTENT')]) {
             sh '''
-                TMPDIR=$(mktemp -d)
-                echo "$KUBECONFIG_CONTENT" > $TMPDIR/config
-                chmod 600 $TMPDIR/config
-
-                docker run --rm \
-                  --network host \
-                  -v $TMPDIR/config:/tmp/kubeconfig:ro \
-                  bitnami/kubectl:latest \
-                  --kubeconfig=/tmp/kubeconfig \
+                printf '%s' "$KUBECONFIG_CONTENT" | kubectl \
+                  --kubeconfig=/dev/stdin \
                   set image deployment/jenkins-k3s-app \
                   app=$IMAGE_NAME:$IMAGE_TAG
-
-                rm -rf $TMPDIR
             '''
         }
       }
