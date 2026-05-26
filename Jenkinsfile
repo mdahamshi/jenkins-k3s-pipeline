@@ -44,10 +44,12 @@ pipeline {
       steps {
         withCredentials([string(credentialsId: 'k3s-kubeconfig', variable: 'KUBECONFIG_CONTENT')]) {
             sh '''
-                printf '%s' "$KUBECONFIG_CONTENT" | kubectl \
-                  --kubeconfig=/dev/stdin \
+                echo "$KUBECONFIG_CONTENT" > /tmp/k3s-config
+                chmod 600 /tmp/k3s-config
+                kubectl --kubeconfig=/tmp/k3s-config \
                   set image deployment/jenkins-k3s-app \
                   app=$IMAGE_NAME:$IMAGE_TAG
+                rm -f /tmp/k3s-config
             '''
         }
       }
