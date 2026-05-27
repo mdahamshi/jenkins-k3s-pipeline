@@ -8,3 +8,8 @@ const server = http.createServer((req, res) => {
 server.listen(3000, () => {
   console.log('Server running on port 3000');
 });
+process.on('SIGTERM', () => {
+  server.close(() => {
+    process.exit(0);
+  });
+});
