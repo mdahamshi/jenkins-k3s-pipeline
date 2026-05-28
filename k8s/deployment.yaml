@@ -15,7 +15,6 @@ spec:
     spec:
       containers:
         - name: app
-          image: ghcr.io/mdahamshi/jenkins-k3s-pipeline:latest
+          image: ghcr.io/mdahamshi/jenkins-k3s-pipeline
           ports:
             - containerPort: 3000
-          imagePullPolicy: Always
